@@ -255,7 +255,9 @@ Fit STL decomposition to time series data.
 3. **Final Components**: Return S, T, R vectors
 
 # Data Requirements
-- Minimum length: At least 2 complete seasonal cycles (2s observations)
+- Minimum length: `ns * s + 1` observations, because the seasonal smoother
+  spans `ns` points of each cycle-subseries. Without a `setting`, `ns` is 13
+  and monthly data need 157 observations.
 - Seasonal period: s must be reasonable relative to series length
 """
 function fit_baseline(x::Vector{T}, model::STLModel;
@@ -266,7 +268,10 @@ function fit_baseline(x::Vector{T}, model::STLModel;
         setting = STLEstimationSetting(s = model.s)
     end
 
-    setting.ns < length(x)/model.s || throw(ArgumentError("Time series needs at least `ns` seasonal cycles"))
+    min_length = setting.ns * model.s + 1
+    length(x) >= min_length || throw(ArgumentError(
+        "STL with ns = $(setting.ns) and s = $(model.s) needs at least " *
+        "$(min_length) observations (more than ns seasonal cycles), got $(length(x))"))
     
     nObs = length(x)
     model.s < nObs || throw(ArgumentError("Periodicity must be less than data length"))
