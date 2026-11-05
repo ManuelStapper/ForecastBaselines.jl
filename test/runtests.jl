@@ -201,6 +201,16 @@ test_horizons = [1, 3, [1, 2, 5], 1:6]
         @test fitted_seasonal.model.season.s == 12
     end
     
+    @testset "Damped trends start from the fitted slope" begin
+        Random.seed!(7)
+        x = collect(300.0 .- 2.25 .* (1:60) .+ randn(60))
+        slope(trend) = ForecastBaselines.getInitial(
+            x, ETSModel(error = "A", trend = trend)).z0.B
+        @test slope("Ad") ≈ slope("A")
+        @test slope("Md") ≈ slope("M")
+        @test slope("A") < -2
+    end
+
     @testset "STL Model Tests" begin
         model = STLModel(s = 12)  # 12-period seasonality
         fitted = fit_baseline(seasonal_data, model)
