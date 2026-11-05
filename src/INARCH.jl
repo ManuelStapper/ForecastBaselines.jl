@@ -287,8 +287,9 @@ function point_forecast(fitted::INARCHFitted,
     seas = zeros(hMax + p)
     if s > 0
         for kk = 1:k
-            seas .+= γ[kk] .* sin.(tSeq)
-            seas .+= γ[k + kk] .* cos.(tSeq)
+            ωk = kk .* tSeq
+            seas .+= γ[kk] .* sin.(ωk)
+            seas .+= γ[k + kk] .* cos.(ωk)
         end
     end
     
@@ -395,8 +396,9 @@ function interval_forecast(fitted::INARCHFitted,
     seas = zeros(hMax + p)
     if s > 0
         for kk = 1:k
-            seas .+= γ[kk] .* sin.(tSeq)
-            seas .+= γ[k + kk] .* cos.(tSeq)
+            ωk = kk .* tSeq
+            seas .+= γ[kk] .* sin.(ωk)
+            seas .+= γ[k + kk] .* cos.(ωk)
         end
     end
     
