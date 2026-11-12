@@ -201,6 +201,12 @@ test_horizons = [1, 3, [1, 2, 5], 1:6]
         @test fitted_seasonal.model.season.s == 12
     end
     
+    @testset "ETSModel error argument selects the error type" begin
+        @test ETSModel(error = "A").error isa AError
+        @test ETSModel(error = "M").error isa MError
+        @test_throws ArgumentError ETSModel(error = "N")
+    end
+
     @testset "STL Model Tests" begin
         model = STLModel(s = 12)  # 12-period seasonality
         fitted = fit_baseline(seasonal_data, model)

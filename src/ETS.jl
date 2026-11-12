@@ -76,10 +76,12 @@ function ETSModel(;error::String = "A",
                   trend::String = "N",
                   season::String = "N",
                   s::Int = 1)
-    if error == "N"
+    if error == "A"
+        et = AError()
+    elseif error == "M"
         et = MError()
     else
-        et = AError()
+        throw(ArgumentError("error must be \"A\" or \"M\", got \"$error\""))
     end
 
     if trend == "A"
