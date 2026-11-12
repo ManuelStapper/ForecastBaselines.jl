@@ -763,8 +763,19 @@ end
 
 function L_fun(x::Vector{T1}, model::ETSModel, parVec::Vector{Float64})  where {T1 <: Real}
     par = ETSθ2par(parVec, model)
-    if !(0 <= par.θ.α <= 1) | !(0 <= par.θ.β <= par.θ.α) | !(0 <= par.θ.γ <= 1 - par.θ.α) | !(0 <= par.θ.ϕ <= 1)
-        return Inf
+
+    # Nelder-Mead stops once the objective values over the simplex are close
+    # together. A single infinite vertex makes their spread NaN, and the search
+    # then stops at its starting point. The initial simplex moves phi = 0.99
+    # past 1, which puts such a vertex on every damped-trend fit. A finite
+    # penalty that grows with the violation keeps the spread finite and pushes
+    # the simplex back inside the constraints.
+    violation = max(0, -par.θ.α) + max(0, par.θ.α - 1) +
+                max(0, -par.θ.β) + max(0, par.θ.β - par.θ.α) +
+                max(0, -par.θ.γ) + max(0, par.θ.γ - (1 - par.θ.α)) +
+                max(0, -par.θ.ϕ) + max(0, par.θ.ϕ - 1)
+    if violation > 0
+        return 1e8 * (1 + violation)
     end
 
     filtered = ETSFilter(x, model, par)
