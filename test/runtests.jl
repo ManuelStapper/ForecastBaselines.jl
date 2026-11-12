@@ -251,6 +251,21 @@ test_horizons = [1, 3, [1, 2, 5], 1:6]
         @test length(fitted_seasonal.par.γ) == 2  # sin + cos coefficients
     end
     
+    @testset "INARCH forecasts evaluate each harmonic at its own frequency" begin
+        # Without autoregression the forecast is the intercept times the
+        # seasonal factor, which repeats every s/2 steps under the second
+        # harmonic alone.
+        model = INARCHModel(p = 1, s = 12, k = 2)
+        par = INARCHParameter(5.0, [0.0], 0.0, [0.0, 0.0, 0.0, 0.7])
+        fitted = INARCHFitted(fill(5, 48), model, par,
+                              INARCHEstimationSetting(), TemporalInfo())
+        expected = 5 .* exp.(0.7 .* cos.(2 .* 2π .* (49:60) ./ 12))
+        @test point_forecast(fitted, 1:12) ≈ expected
+        fc_point, _, _, _ = interval_forecast(
+            fitted, ModelTrajectoryInterval(n_trajectories = 10), 1:12, [0.8])
+        @test fc_point ≈ expected
+    end
+
     @testset "KDE Model Tests" begin
         model = KDEModel()
         fitted = fit_baseline(stationary_data, model)
