@@ -170,6 +170,19 @@ test_horizons = [1, 3, [1, 2, 5], 1:6]
         @test length(fitted_seasonal.par.μ) == 3  # β₀ + sin + cos
     end
     
+    @testset "ARMA mean function fits a series far from zero" begin
+        s = 12
+        mu = (θ, t) -> θ[1] + θ[2] * sin(2π * t / s) + θ[3] * cos(2π * t / s) +
+                       θ[4] * sin(2 * 2π * t / s) + θ[5] * cos(2 * 2π * t / s)
+        t = 1:200
+        Random.seed!(11)
+        signal = 100 .+ 3 .* sin.(2π .* t ./ s) .+ 1.5 .* cos.(2 .* 2π .* t ./ s)
+        y = collect(signal .+ 0.5 .* randn(200))
+        fitted = fit_baseline(y, ARMAModel(1, 0, mu, 5))
+        fitted_mean = [mu(fitted.par.μ, tt) for tt in t]
+        @test sqrt(mean((fitted_mean .- signal) .^ 2)) < 1
+    end
+
     @testset "ETS Model Tests" begin
         # Test simple ETS(A,N,N)
         model = ETSModel(error="A", trend="N", season="N")

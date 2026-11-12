@@ -301,7 +301,9 @@ Fit ARMA model to time series data using maximum likelihood estimation.
 Uses conditional maximum likelihood estimation:
 1. Computes residuals ϵ_t = X_t - μ_t - ∑αᵢ(X_{t-i} - μ_{t-i}) - ∑βⱼϵ_{t-j}
 2. Maximises Gaussian likelihood L(θ) = ∏ᵢ φ(ϵᵢ; 0, σ²)
-3. Optimisation via `Optim.jl` with starting values from method of moments
+3. Optimisation via Nelder-Mead in `Optim.jl`, starting from zero AR and MA
+   coefficients, the mean of the data for the first mean-function coefficient,
+   zero for the others and the sample variance for σ²
 
 # Parameter Constraints
 When `setting.ensure_stability = true`:
@@ -365,8 +367,13 @@ function fit_baseline(x::Vector{T1},
         -sum(logpdf.(d, y))
     end
 
-    # No dependency for initialisation
-    inits = [zeros(model.p + model.q); zeros(model.μDim); var(x)]
+    # Under every convenience constructor the first mean-function coordinate is
+    # the intercept. Nelder-Mead takes small steps from its starting point and
+    # does not reach an intercept far from zero, so the intercept starts at the
+    # mean of the data and the remaining coordinates at zero.
+    inits = [zeros(model.p + model.q);
+             model.μDim > 0 ? [mean(x); zeros(model.μDim - 1)] : zeros(0);
+             var(x)]
     est = optimize(vars -> tf(vars, x, model, setting.ensure_stability), inits).minimizer
     estPar = ARMAθ2par(est, model)
 
