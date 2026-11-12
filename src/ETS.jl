@@ -751,9 +751,9 @@ function getInitial(x::Vector{T1}, model::ETSModel) where {T1 <: Real}
     X = [ones(nxx) collect(1:nxx)]
     beta = inv(X'X)*X'yy
     l = beta[1]
-    if model.trend isa ATrend
+    if model.trend isa ATrend || model.trend isa AdTrend
         b = beta[2]
-    elseif model.trend isa MTrend
+    elseif model.trend isa MTrend || model.trend isa MdTrend
         b = 1 + beta[2]/beta[1]
     else
         b = 0.0
